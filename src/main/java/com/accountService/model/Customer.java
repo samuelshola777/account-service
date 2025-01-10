@@ -8,22 +8,34 @@ import jakarta.persistence.Column;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Data;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Entity
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Customer {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(nullable = false)
+    private String firstName;
+    
+    @Column(nullable = false)
+    private String lastName;
+    
     @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(unique = true)
     private String bvn;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String nin;
-
-    @Column(nullable = false)
-    private String name;
 
     @Column(nullable = false, unique = true)
     private String phoneNumber;

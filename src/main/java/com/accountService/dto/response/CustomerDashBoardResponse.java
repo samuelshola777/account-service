@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.List;
 import com.accountService.dto.response.MakePaymentResponse;
+import java.math.BigDecimal;
 
 
 @Data
@@ -22,6 +23,10 @@ public class CustomerDashBoardResponse {
     private Double accountBalance;
     private String accountStatus;
     private List<MakePaymentResponse> transactionHistory;
+    private String customerName;
+    private String accountNumber;
+    private BigDecimal balance;
+    private List<MakePaymentResponse> transactions;
     
 }
 

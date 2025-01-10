@@ -25,6 +25,9 @@ import org.springframework.http.MediaType;
 import java.time.LocalDateTime;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
+import com.accountService.dto.response.CustomerDashBoardResponse;
+import java.math.BigDecimal;
+
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +36,7 @@ public class AccountServiceImpl implements AccountService {
     private final AccountRepository accountRepository;
     private final CustomerRepository customerRepository;
     private final Environment environment;
-    private String authToken;
+    
 
     /**
      * Handles the onboarding process for new customers.
@@ -52,7 +55,10 @@ public class AccountServiceImpl implements AccountService {
         Customer customer = Customer.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
+                .bvn(request.getBvn())
+                .nin(request.getNin())
                 .email(request.getEmail())
+                .phoneNumber(request.getPhoneNumber())
                 .build();
         
         Customer savedCustomer = customerRepository.save(customer);
@@ -60,7 +66,7 @@ public class AccountServiceImpl implements AccountService {
         Account account = Account.builder()
                 .accountNumber(generateAccountNumber())
                 .customer(savedCustomer)
-                .balance(0.0)
+                .balance(BigDecimal.ZERO)
                 .build();
         
         Account savedAccount = accountRepository.save(account);
