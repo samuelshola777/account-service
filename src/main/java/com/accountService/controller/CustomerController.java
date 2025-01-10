@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import com.accountService.dto.response.CustomerDashBoardResponse;
+import com.accountService.dto.request.BankTransferRequest;
+import com.accountService.dto.response.BankTransferResponse;
 
 
 @RestController
@@ -66,4 +69,15 @@ public class CustomerController {
         return ResponseEntity.ok(accountService.authLogin(request));
     }
 
+   
+
+   @GetMapping("/dashboard/{customerId}")
+   public ResponseEntity<CustomerDashBoardResponse> getCustomerDashBoard(@PathVariable UUID customerId) {
+    return ResponseEntity.ok(accountService.getCustomerDashBoard(customerId));
    }
+
+   @PostMapping("/bank-transfer")
+   public ResponseEntity<BankTransferResponse> bankTransfer(@RequestBody BankTransferRequest request) {
+    return ResponseEntity.ok(accountService.bankTransfer(request));
+   }
+}

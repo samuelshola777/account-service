@@ -9,6 +9,8 @@ import com.accountService.dto.response.AuthLoginResponse;
 import java.util.List;
 import java.util.UUID;
 import com.accountService.dto.response.CustomerDashBoardResponse;
+import com.accountService.dto.request.BankTransferRequest;
+import com.accountService.dto.response.BankTransferResponse;
 
 public interface AccountService {
 
@@ -61,4 +63,13 @@ public interface AccountService {
      * @throws RuntimeException if customer not found
      */
     CustomerDashBoardResponse getCustomerDashBoard(UUID customerId);
+
+    /**
+     * Initiates a bank transfer for a customer.
+     *
+     * @param request Contains transfer details including amount, source and destination accounts
+     * @return Response containing transfer transaction details
+     * @throws RuntimeException if transfer processing fails or customer not found
+     */
+    BankTransferResponse bankTransfer(BankTransferRequest request);
 }

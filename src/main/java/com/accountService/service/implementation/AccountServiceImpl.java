@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpEntity;
 import org.springframework.core.env.Environment;
-import com.accountService.dto.request.RegisterAuthRequest;
 import com.accountService.dto.request.MakePaymentRequest;
 import com.accountService.dto.response.MakePaymentResponse;
 import com.accountService.dto.request.AuthLoginRequest;
@@ -22,11 +21,15 @@ import com.accountService.dto.response.AuthLoginResponse;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.MediaType;
-import java.time.LocalDateTime;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import com.accountService.dto.response.CustomerDashBoardResponse;
 import java.math.BigDecimal;
+import org.springframework.web.client.RestClientException;
+import com.accountService.dto.request.BankTransferRequest;
+import com.accountService.dto.response.BankTransferResponse;
+import org.apache.commons.lang3.StringUtils;
+
 
 
 @Service
@@ -190,6 +193,79 @@ public class AccountServiceImpl implements AccountService {
             .balance(account.getBalance())
             .transactions(transactions)
             .build();
+    }
+
+    @Override
+    public BankTransferResponse bankTransfer(BankTransferRequest request) {
+        // Validate request is not null
+        if (request == null) {
+            throw new IllegalArgumentException("Transfer request cannot be null");
+        }
+
+        // Validate required fields
+        if (request.getCustomerId() == null) {
+            throw new IllegalArgumentException("Customer ID is required");
+        }
+        if (StringUtils.isBlank(request.getSourceAccountNumber())) {
+            throw new IllegalArgumentException("Source account number is required"); 
+        }
+        if (StringUtils.isBlank(request.getDestinationAccountNumber())) {
+            throw new IllegalArgumentException("Destination account number is required");
+        }
+        if (StringUtils.isBlank(request.getDestinationBankCode())) {
+            throw new IllegalArgumentException("Destination bank code is required");
+        }
+        if (request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Valid transfer amount is required");
+        }
+        if (StringUtils.isBlank(request.getTransactionPin())) {
+            throw new IllegalArgumentException("Transaction PIN is required");
+        }
+
+        // Validate customer exists
+         customerRepository.findById(request.getCustomerId())
+            .orElseThrow(() -> new RuntimeException("Customer not found"));
+
+        // Validate source account exists and has sufficient funds
+        Account sourceAccount = accountRepository.findByAccountNumber(request.getSourceAccountNumber())
+            .orElseThrow(() -> new RuntimeException("Source account not found"));
+
+        if (sourceAccount.getBalance().compareTo(request.getAmount()) < 0) {
+            throw new RuntimeException("Insufficient funds for transfer");
+        }
+
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String transferUrl = environment.getProperty("api.bank.transfer.url", "https://bank-service/bank-transfer");
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            
+            HttpEntity<BankTransferRequest> transferRequest = new HttpEntity<>(request, headers);
+            
+            BankTransferResponse response = restTemplate.postForObject(
+                transferUrl, 
+                transferRequest, 
+                BankTransferResponse.class
+            );
+
+            if (response == null) {
+                throw new RuntimeException("No response received from transfer service");
+            }
+
+            // Update account balance if transfer was successful
+            if ("SUCCESS".equalsIgnoreCase(response.getStatus())) {
+                sourceAccount.setBalance(sourceAccount.getBalance().subtract(request.getAmount()));
+                accountRepository.save(sourceAccount);
+            }
+
+            return response;
+
+        } catch (RestClientException e) {
+            throw new RuntimeException("Failed to process bank transfer: " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("Unexpected error during bank transfer: " + e.getMessage());
+        }
     }
 
 }
